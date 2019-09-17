@@ -1,9 +1,37 @@
 import numpy as np
 from PIL import Image
+import torch
+import os
 
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import BatchSampler
+from torchvision import transforms
 
+widget_classes = ['back_button', 'browser_address', 'browser_bookmark', 'browser_tab', 'button', 'checkbox', 'close_button', 'menu', 'minimize_button', 'next_button', 'slider', 'text_field', 'text_object']
+
+class WidgetsDataset(Dataset):
+    def __init__(self, path, tfm=None):
+        super().__init__()
+        self._data = []
+        for label in os.listdir(path):
+            for imgfile in os.listdir(os.path.join(path, label)):
+                try:
+                    img = Image.open(os.path.join(path, label, imgfile))
+                    # tfm(img)
+                    self._data.append((tfm(img), widget_classes.index(label)))
+                except:
+                    continue
+     
+        self._tfm = tfm
+        
+    def __len__(self):
+        return len(self._data)
+    
+    def __getitem__(self, idx):
+        example, label = self._data[idx]
+        if self._tfm:
+            example = self._tfm(example)
+        return example, widget_classes  #.index(label)
 
 class SiameseMNIST(Dataset):
     """
@@ -75,6 +103,77 @@ class SiameseMNIST(Dataset):
     def __len__(self):
         return len(self.mnist_dataset)
 
+class SiameseWidgets(Dataset):
+    """
+    Train: For each sample creates randomly a positive or a negative pair
+    Test: Creates fixed pairs for testing
+    """
+
+    def __init__(self, widgets_dataset: WidgetsDataset, train):
+        self.widgets_dataset = widgets_dataset
+
+        self.train = train
+        self.transform = self.widgets_dataset._tfm
+
+        if self.train:
+            self.train_data, self.train_labels = list(zip(*self.widgets_dataset._data))
+            # self.train_data = torch.stack(self.train_data)
+            self.train_labels = torch.LongTensor(self.train_labels)
+            self.labels_set = set(self.train_labels.numpy())
+            self.label_to_indices = {label: np.where(self.train_labels.numpy() == label)[0]
+                                     for label in self.labels_set}
+        else:
+            # generate fixed pairs for testing
+            self.test_data, self.test_labels = list(zip(*self.widgets_dataset._data))
+            # self.test_data = torch.FloatTensor(self.test_data)
+            self.test_labels = torch.LongTensor(self.test_labels)
+            self.labels_set = set(self.test_labels.numpy())
+            self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0]
+                                     for label in self.labels_set}
+
+            random_state = np.random.RandomState(29)
+
+            positive_pairs = [[i,
+                               random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
+                               1]
+                              for i in range(0, len(self.test_data), 2)]
+
+            negative_pairs = [[i,
+                               random_state.choice(self.label_to_indices[
+                                                       np.random.choice(
+                                                           list(self.labels_set - set([self.test_labels[i].item()]))
+                                                       )
+                                                   ]),
+                               0]
+                              for i in range(1, len(self.test_data), 2)]
+            self.test_pairs = positive_pairs + negative_pairs
+
+    def __getitem__(self, index):
+        if self.train:
+            target = np.random.randint(0, 2)
+            img1, label1 = self.train_data[index], self.train_labels[index].item()
+            if target == 1:
+                siamese_index = index
+                while siamese_index == index:
+                    siamese_index = np.random.choice(self.label_to_indices[label1])
+            else:
+                siamese_label = np.random.choice(list(self.labels_set - set([label1])))
+                siamese_index = np.random.choice(self.label_to_indices[siamese_label])
+            img2 = self.train_data[siamese_index]
+        else:
+            img1 = self.test_data[self.test_pairs[index][0]]
+            img2 = self.test_data[self.test_pairs[index][1]]
+            target = self.test_pairs[index][2]
+
+        img1 = Image.fromarray(img1.squeeze().numpy(), mode='L')
+        img2 = Image.fromarray(img2.squeeze().numpy(), mode='L')
+        if self.transform is not None:
+            img1 = self.transform(img1)
+            img2 = self.transform(img2)
+        return (img1, img2), target
+
+    def __len__(self):
+        return len(self.widgets_dataset)
 
 class TripletMNIST(Dataset):
     """
