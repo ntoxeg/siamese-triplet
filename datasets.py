@@ -13,13 +13,17 @@ class WidgetsDataset(Dataset):
     def __init__(self, path, tfm=None):
         super().__init__()
         self._data = []
+        to_tensor = transforms.ToTensor()
         for label in os.listdir(path):
             for imgfile in os.listdir(os.path.join(path, label)):
                 try:
                     img = Image.open(os.path.join(path, label, imgfile))
-                    # tfm(img)
-                    self._data.append((tfm(img), widget_classes.index(label)))
-                except:
+                    img = img.convert('L')
+                    img = to_tensor(img)
+                    tfm(img)
+                    self._data.append((img, widget_classes.index(label)))
+                except RuntimeError as e:
+                    print(e)
                     continue
      
         self._tfm = tfm
@@ -31,7 +35,35 @@ class WidgetsDataset(Dataset):
         example, label = self._data[idx]
         if self._tfm:
             example = self._tfm(example)
-        return example, widget_classes  #.index(label)
+        return example, label  #.index(label)
+
+class COCODataset(Dataset):
+    def __init__(self, path, tfm=None):
+        super().__init__()
+        self._data = []
+        to_tensor = transforms.ToTensor()
+        for label in os.listdir(path):
+            for imgfile in os.listdir(os.path.join(path, label)):
+                try:
+                    img = Image.open(os.path.join(path, label, imgfile))
+                    img = img.convert('L')
+                    img = to_tensor(img)
+                    tfm(img)
+                    self._data.append((img, widget_classes.index(label)))
+                except RuntimeError as e:
+                    print(e)
+                    continue
+     
+        self._tfm = tfm
+        
+    def __len__(self):
+        return len(self._data)
+    
+    def __getitem__(self, idx):
+        example, label = self._data[idx]
+        if self._tfm:
+            example = self._tfm(example)
+        return example, label  #.index(label)
 
 class SiameseMNIST(Dataset):
     """
@@ -165,8 +197,9 @@ class SiameseWidgets(Dataset):
             img2 = self.test_data[self.test_pairs[index][1]]
             target = self.test_pairs[index][2]
 
-        img1 = Image.fromarray(img1.squeeze().numpy(), mode='L')
-        img2 = Image.fromarray(img2.squeeze().numpy(), mode='L')
+        to_tensor = transforms.ToTensor()
+        img1 = to_tensor(Image.fromarray(img1.squeeze().numpy(), mode='L'))
+        img2 = to_tensor(Image.fromarray(img2.squeeze().numpy(), mode='L'))
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
