@@ -13,7 +13,7 @@ from pycocotools.cocoeval import COCOeval
 
 
 class ImageDataset(Dataset):
-    def __init__(self, path, classes, tfm=None, detector=None, coco=None):
+    def __init__(self, path, classes, tfm=None, grayscale=False):
         super().__init__()
         self._data = []
         to_tensor = transforms.ToTensor()
@@ -22,7 +22,10 @@ class ImageDataset(Dataset):
             for imgfile in os.listdir(os.path.join(path, label)):
                 try:
                     img = Image.open(os.path.join(path, label, imgfile))
-                    img = img.convert("L")
+                    if grayscale:
+                        img = img.convert("L")
+                    else:
+                        img = img.convert("RGB")
                     img = to_tensor(img)
                     tfm(img)
                     self._data.append((img, self.classes.index(label)))
@@ -137,10 +140,11 @@ class SiameseImage(Dataset):
     Test: Creates fixed pairs for testing
     """
 
-    def __init__(self, widgets_dataset: ImageDataset, train):
+    def __init__(self, widgets_dataset: ImageDataset, train, grayscale=False):
         self.widgets_dataset = widgets_dataset
 
         self.train = train
+        self.grayscale = grayscale
         self.transform = self.widgets_dataset._tfm
 
         if self.train:
@@ -212,8 +216,9 @@ class SiameseImage(Dataset):
             target = self.test_pairs[index][2]
 
         to_tensor = transforms.ToTensor()
-        img1 = to_tensor(Image.fromarray(img1.squeeze().numpy(), mode="L"))
-        img2 = to_tensor(Image.fromarray(img2.squeeze().numpy(), mode="L"))
+        img_mode = "L" if self.grayscale else "RGB"
+        img1 = to_tensor(Image.fromarray(img1.squeeze().numpy(), mode=img_mode))
+        img2 = to_tensor(Image.fromarray(img2.squeeze().numpy(), mode=img_mode))
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)

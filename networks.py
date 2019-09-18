@@ -3,9 +3,10 @@ import torch.nn.functional as F
 
 
 class EmbeddingNet(nn.Module):
-    def __init__(self):
+    def __init__(self, grayscale=False):
         super(EmbeddingNet, self).__init__()
-        self.convnet = nn.Sequential(nn.Conv2d(1, 32, 5), nn.PReLU(),
+        input_ch = 1 if grayscale else 3
+        self.convnet = nn.Sequential(nn.Conv2d(input_ch, 32, 5), nn.PReLU(),
                                      nn.MaxPool2d(2, stride=2),
                                      nn.Conv2d(32, 64, 5), nn.PReLU(),
                                      nn.MaxPool2d(2, stride=2))
