@@ -11,24 +11,6 @@ from torchvision import transforms
 import pycocotools.coco as coco
 from pycocotools.cocoeval import COCOeval
 
-def parse_image(detector, image):
-    if isinstance(image, np.ndarray):
-        image = Image.fromarray(image, mode="L")
-    if isinstance(image, torch.Tensor):
-        image = Image.fromarray(image.numpy(), mode="L")
-
-    img_name = "__image.png"
-    # TODO: remove the need to save to disk
-    image.save(img_name)
-
-    # global detections = Dict()
-    with torch.no_grad():
-        return detector.run(img_name)["results"]
-
-def extract_bbox(img, bbox):
-    bbox_img = img.crop(bbox)
-
-    return bbox_img
 
 class ImageDataset(Dataset):
     def __init__(self, path, classes, tfm=None, detector=None, coco=None):
@@ -49,21 +31,12 @@ class ImageDataset(Dataset):
                     continue
 
         self._tfm = tfm
-        self._detector = detector
-        self._coco = coco
 
     def __len__(self):
         return len(self._data)
 
     def __getitem__(self, idx):
         example, label = self._data[idx]
-        if self._detector is not None:
-            target_id = self._coco.class_name.index(self.classes[label])
-            visual_parse = parse_image(self._detector, example)
-            top_choice = visual_parse[target_id][0, :4]
-            example = Image.fromarray(example.numpy(), mode="L")
-            example = extract_bbox(example, top_choice.astuple())
-            example = transforms.ToTensor()(example)
         if self._tfm is not None:
             example = self._tfm(example)
         return example, label  # .index(label)
