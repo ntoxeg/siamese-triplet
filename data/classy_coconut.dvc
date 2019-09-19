@@ -1,0 +1,7 @@
+md5: 384f7b96900ade7d84ecd2b7cce79719
+outs:
+- md5: e88cba2df4560be35cd564747f3eb7cb.dir
+  path: classy_coconut
+  cache: true
+  metric: false
+  persist: false
