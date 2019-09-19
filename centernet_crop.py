@@ -6,12 +6,6 @@ from datasets import COCODataset
 CENTERNET_TASK = "ctdet"
 CENTERNET_MODEL_PATH = "/home/adrian/projects/CenterNet/models/ctdet_coco_dla_2x.pth"
 
-data_dir = "/home/adrian/data"
-data_split = "val2017"
-annFile = f"{data_dir}/coco/annotations/instances_{data_split}.json"
-
-classes = ("person", "dog", "motorcycle", "bear")
-
 import sys
 
 sys.path.extend(
@@ -32,12 +26,17 @@ opt.data_dir = "/home/adrian/data"
 cocodata = COCODataset(opt, "val")
 
 
-datain = "/home/adrian/data/coconut/train"
-dataout = "/home/adrian/data/classy_coconut/train"
+datain = "data/coconut/train"
+dataout = "data/classy_coconut/train"
+data_dir = "data"
+data_split = "train"
+annFile = f"{data_dir}/coco/annotations/instances_{data_split}2017.json"
 
 
 def run(datain, dataout):
     for klass in os.listdir(datain):
+        if not os.path.isdir(os.path.join(dataout, klass)):
+            os.makedirs(os.path.join(dataout, klass))
         for imgfile in os.listdir(os.path.join(datain, klass)):
             image = Image.open(os.path.join(datain, klass, imgfile))
             visual_parse = parse_image(detector, image)
@@ -48,14 +47,17 @@ def run(datain, dataout):
             bbox = klass_bboxes[0, :4].tolist()
             klassimg = extract_bbox(image, bbox)
             try:
-            	klassimg.save(os.path.join(dataout, klass, imgfile))
+                klassimg.save(os.path.join(dataout, klass, imgfile))
             except SystemError:
-            	continue
+                continue
 
 
 run(datain, dataout)
 
-datain = "/home/adrian/data/coconut/dev"
-dataout = "/home/adrian/data/classy_coconut/dev"
+datain = "data/coconut/val"
+dataout = "data/classy_coconut/val"
+data_dir = "data"
+data_split = "val"
+annFile = f"{data_dir}/coco/annotations/instances_{data_split}2017.json"
 
 run(datain, dataout)
