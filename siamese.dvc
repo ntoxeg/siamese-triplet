@@ -1,5 +1,5 @@
 md5: 3dbcba8c6215785cb0c8215596a9f60a
-cmd: papermill "RGB Siamese.ipynb" "RGB Siamese output.ipynb"
+cmd: papermill "RGB Siamese.ipynb" "RGB Siamese output.ipynb" -p n_epochs 20
 deps:
 - md5: 9313053e119e26756298735d2ee3b4fd
   path: RGB Siamese.ipynb

@@ -3,8 +3,8 @@ import torch.nn.functional as F
 
 
 class EmbeddingNet(nn.Module):
-    def __init__(self, grayscale=False):
-        super(EmbeddingNet, self).__init__()
+    def __init__(self, emsize, grayscale=False):
+        super().__init__()
         input_ch = 1 if grayscale else 3
         self.convnet = nn.Sequential(nn.Conv2d(input_ch, 32, 5), nn.PReLU(),
                                      nn.MaxPool2d(2, stride=2),
@@ -15,7 +15,7 @@ class EmbeddingNet(nn.Module):
                                 nn.PReLU(),
                                 nn.Linear(256, 256),
                                 nn.PReLU(),
-                                nn.Linear(256, 2)
+                                nn.Linear(256, emsize)
                                 )
 
     def forward(self, x):
@@ -30,7 +30,7 @@ class EmbeddingNet(nn.Module):
 
 class EmbeddingNetL2(EmbeddingNet):
     def __init__(self):
-        super(EmbeddingNetL2, self).__init__()
+        super().__init__()
 
     def forward(self, x):
         output = super(EmbeddingNetL2, self).forward(x)
@@ -43,7 +43,7 @@ class EmbeddingNetL2(EmbeddingNet):
 
 class ClassificationNet(nn.Module):
     def __init__(self, embedding_net, n_classes):
-        super(ClassificationNet, self).__init__()
+        super().__init__()
         self.embedding_net = embedding_net
         self.n_classes = n_classes
         self.nonlinear = nn.PReLU()
@@ -61,7 +61,7 @@ class ClassificationNet(nn.Module):
 
 class SiameseNet(nn.Module):
     def __init__(self, embedding_net):
-        super(SiameseNet, self).__init__()
+        super().__init__()
         self.embedding_net = embedding_net
 
     def forward(self, x1, x2):
@@ -75,7 +75,7 @@ class SiameseNet(nn.Module):
 
 class TripletNet(nn.Module):
     def __init__(self, embedding_net):
-        super(TripletNet, self).__init__()
+        super().__init__()
         self.embedding_net = embedding_net
 
     def forward(self, x1, x2, x3):
