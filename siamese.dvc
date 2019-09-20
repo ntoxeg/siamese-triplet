@@ -1,0 +1,18 @@
+md5: 3dbcba8c6215785cb0c8215596a9f60a
+cmd: papermill "RGB Siamese.ipynb" "RGB Siamese output.ipynb"
+deps:
+- md5: 9313053e119e26756298735d2ee3b4fd
+  path: RGB Siamese.ipynb
+- md5: a66d50463883e4605f569451861f3ace.dir
+  path: data/classy_coconut
+outs:
+- md5: f937163bc6a4108bf899f0b22b3c9b28
+  path: RGB Siamese output.ipynb
+  cache: true
+  metric: false
+  persist: false
+- md5: e9c459a1e84143fd5de9cfff4a1014c9
+  path: siamese.pth
+  cache: true
+  metric: false
+  persist: false
