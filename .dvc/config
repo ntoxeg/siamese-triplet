@@ -1,0 +1,4 @@
+['remote "localstorage"']
+url = /data
+[core]
+remote = localstorage
