@@ -1,12 +1,12 @@
-md5: 2534538ebc6d485aab1fffc1c56ce805
+md5: fbb15f82f0cb2221a590ba890b467a6d
 cmd: python centernet_crop.py
 deps:
 - md5: 5cf4517116d70fe0c4463e77b3faaeb0
   path: centernet_crop.py
-- md5: 96813bedf3a9ecdc53963d12a2c9a8f4.dir
+- md5: 1c116eeb818bff25d9d40a1d9610843e.dir
   path: data/coconut
 outs:
-- md5: a66d50463883e4605f569451861f3ace.dir
+- md5: 5103f2ab8d0e955d8dac7290d6879a11.dir
   path: data/classy_coconut
   cache: true
   metric: false
