@@ -10,6 +10,7 @@ from torch.utils.data.sampler import BatchSampler
 from torchvision import transforms
 import pycocotools.coco as coco
 from pycocotools.cocoeval import COCOeval
+from image_features import image_features
 
 
 class ImageDataset(Dataset):
@@ -27,8 +28,11 @@ class ImageDataset(Dataset):
                     else:
                         img = img.convert("RGB")
                     img = to_tensor(img)
-                    tfm(img)
-                    self._data.append((os.path.join(path, label, imgfile), self.classes.index(label)))
+                    if tfm is not None:
+                        tfm(img)
+                    self._data.append(
+                        (os.path.join(path, label, imgfile), self.classes.index(label))
+                    )
                     del img
                 except RuntimeError as e:
                     print(e)
@@ -153,9 +157,9 @@ class SiameseImage(Dataset):
         self._labels = torch.LongTensor(self._labels)
         self.labels_set = set(self._labels.numpy())
         self.label_to_indices = {
-                label: np.where(self._labels.numpy() == label)[0]
-                for label in self.labels_set
-            }
+            label: np.where(self._labels.numpy() == label)[0]
+            for label in self.labels_set
+        }
 
         if not self.train:
             random_state = np.random.RandomState(29)
@@ -163,9 +167,7 @@ class SiameseImage(Dataset):
             positive_pairs = [
                 [
                     i,
-                    random_state.choice(
-                        self.label_to_indices[self._labels[i].item()]
-                    ),
+                    random_state.choice(self.label_to_indices[self._labels[i].item()]),
                     1,
                 ]
                 for i in range(0, len(self._data_paths), 2)
@@ -177,9 +179,7 @@ class SiameseImage(Dataset):
                     random_state.choice(
                         self.label_to_indices[
                             np.random.choice(
-                                list(
-                                    self.labels_set - set([self._labels[i].item()])
-                                )
+                                list(self.labels_set - set([self._labels[i].item()]))
                             )
                         ]
                     ),
@@ -203,8 +203,12 @@ class SiameseImage(Dataset):
                 siamese_index = np.random.choice(self.label_to_indices[siamese_label])
             img2 = Image.open(self._data_paths[siamese_index]).convert("RGB")
         else:
-            img1 = Image.open(self._data_paths[self.test_pairs[index][0]]).convert("RGB")
-            img2 = Image.open(self._data_paths[self.test_pairs[index][1]]).convert("RGB")
+            img1 = Image.open(self._data_paths[self.test_pairs[index][0]]).convert(
+                "RGB"
+            )
+            img2 = Image.open(self._data_paths[self.test_pairs[index][1]]).convert(
+                "RGB"
+            )
             target = self.test_pairs[index][2]
 
         to_tensor = transforms.ToTensor()
@@ -214,6 +218,80 @@ class SiameseImage(Dataset):
             img1 = self.transform(img1)
             img2 = self.transform(img2)
         return (img1, img2), target
+
+    def __len__(self):
+        return len(self.widgets_dataset)
+
+
+class SiameseImage2(Dataset):
+    """
+    Train: For each sample creates randomly a positive or a negative pair
+    Test: Creates fixed pairs for testing
+
+    This one uses `image_features` as a feature extractor.
+    """
+
+    def __init__(self, widgets_dataset: ImageDataset, train, grayscale=False):
+        self.widgets_dataset = widgets_dataset
+
+        self.train = train
+        self.grayscale = grayscale
+        self.transform = self.widgets_dataset._tfm
+        self._data_paths, self._labels = list(zip(*self.widgets_dataset._data))
+        self._labels = torch.LongTensor(self._labels)
+        self.labels_set = set(self._labels.numpy())
+        self.label_to_indices = {
+            label: np.where(self._labels.numpy() == label)[0]
+            for label in self.labels_set
+        }
+
+        if not self.train:
+            random_state = np.random.RandomState(29)
+
+            positive_pairs = [
+                [
+                    i,
+                    random_state.choice(self.label_to_indices[self._labels[i].item()]),
+                    1,
+                ]
+                for i in range(0, len(self._data_paths), 2)
+            ]
+
+            negative_pairs = [
+                [
+                    i,
+                    random_state.choice(
+                        self.label_to_indices[
+                            np.random.choice(
+                                list(self.labels_set - set([self._labels[i].item()]))
+                            )
+                        ]
+                    ),
+                    0,
+                ]
+                for i in range(1, len(self._data_paths), 2)
+            ]
+            self.test_pairs = positive_pairs + negative_pairs
+
+    def __getitem__(self, index):
+        if self.train:
+            target = np.random.randint(0, 2)
+            img1 = self._data_paths[index]
+            label1 = self._labels[index].item()
+            if target == 1:
+                siamese_index = index
+                while siamese_index == index:
+                    siamese_index = np.random.choice(self.label_to_indices[label1])
+            else:
+                siamese_label = np.random.choice(list(self.labels_set - set([label1])))
+                siamese_index = np.random.choice(self.label_to_indices[siamese_label])
+            img2 = self._data_paths[siamese_index]
+        else:
+            img1 = self._data_paths[self.test_pairs[index][0]]
+            img2 = self._data_paths[self.test_pairs[index][1]]
+            target = self.test_pairs[index][2]
+
+        return (image_features([img1]).squeeze(), image_features([img2]).squeeze()), target
 
     def __len__(self):
         return len(self.widgets_dataset)

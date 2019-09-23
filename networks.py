@@ -6,21 +6,47 @@ class EmbeddingNet(nn.Module):
     def __init__(self, emsize, grayscale=False):
         super().__init__()
         input_ch = 1 if grayscale else 3
-        self.convnet = nn.Sequential(nn.Conv2d(input_ch, 32, 5), nn.PReLU(),
-                                     nn.MaxPool2d(2, stride=2),
-                                     nn.Conv2d(32, 64, 5), nn.PReLU(),
-                                     nn.MaxPool2d(2, stride=2))
+        self.convnet = nn.Sequential(
+            nn.Conv2d(input_ch, 32, 5),
+            nn.PReLU(),
+            nn.MaxPool2d(2, stride=2),
+            nn.Conv2d(32, 64, 5),
+            nn.PReLU(),
+            nn.MaxPool2d(2, stride=2),
+        )
 
-        self.fc = nn.Sequential(nn.Linear(1000000, 256),
-                                nn.PReLU(),
-                                nn.Linear(256, 256),
-                                nn.PReLU(),
-                                nn.Linear(256, emsize)
-                                )
+        self.fc = nn.Sequential(
+            nn.Linear(1000000, 256),
+            nn.PReLU(),
+            nn.Linear(256, 256),
+            nn.PReLU(),
+            nn.Linear(256, emsize),
+        )
 
     def forward(self, x):
         output = self.convnet(x)
         output = output.view(output.size()[0], -1)
+        output = self.fc(output)
+        return output
+
+    def get_embedding(self, x):
+        return self.forward(x)
+
+
+class EmbeddingNet2(nn.Module):
+    def __init__(self, emsize):
+        super().__init__()
+
+        self.fc = nn.Sequential(
+            nn.Linear(2048, 256),
+            nn.PReLU(),
+            nn.Linear(256, 256),
+            nn.PReLU(),
+            nn.Linear(256, emsize),
+        )
+
+    def forward(self, x):
+        output = x.view(x.size()[0], -1)
         output = self.fc(output)
         return output
 
