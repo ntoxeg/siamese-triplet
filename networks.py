@@ -33,27 +33,6 @@ class EmbeddingNet(nn.Module):
         return self.forward(x)
 
 
-class EmbeddingNet2(nn.Module):
-    def __init__(self, emsize):
-        super().__init__()
-
-        self.fc = nn.Sequential(
-            nn.Linear(2048, 256),
-            nn.PReLU(),
-            nn.Linear(256, 256),
-            nn.PReLU(),
-            nn.Linear(256, emsize),
-        )
-
-    def forward(self, x):
-        output = x.view(x.size()[0], -1)
-        output = self.fc(output)
-        return output
-
-    def get_embedding(self, x):
-        return self.forward(x)
-
-
 class EmbeddingNetL2(EmbeddingNet):
     def __init__(self):
         super().__init__()

@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image
+from PIL import Image as PImage
 import torch
 import os
 import json
@@ -10,45 +10,61 @@ from torch.utils.data.sampler import BatchSampler
 from torchvision import transforms
 import pycocotools.coco as coco
 from pycocotools.cocoeval import COCOeval
-from image_features import image_features
+
+from losses import ContrastiveLoss
+
+from fastai.vision import *
+
+
+def pad_to_size(img: torch.Tensor, size):
+    padded = torch.zeros(img.shape[0], size[1], size[0])
+    end1, end2 = min(img.shape[1], size[1]), min(img.shape[2], size[0])
+    padded[:, :end1, :end2] = img[:, :end1, :end2]
+    return padded
 
 
 class ImageDataset(Dataset):
-    def __init__(self, path, classes, tfm=None, grayscale=False):
+    def __init__(
+        self, path, classes, tfms=None, grayscale=False, check_integrity=False
+    ):
         super().__init__()
         self._data = []
-        to_tensor = transforms.ToTensor()
+        self.path = path
+        self.to_tensor = transforms.ToTensor()
         self.classes = classes
+        self.c = len(self.classes)
         for label in self.classes:
             for imgfile in os.listdir(os.path.join(path, label)):
                 try:
-                    img = Image.open(os.path.join(path, label, imgfile))
-                    if grayscale:
-                        img = img.convert("L")
-                    else:
-                        img = img.convert("RGB")
-                    img = to_tensor(img)
-                    if tfm is not None:
-                        tfm(img)
+                    if check_integrity:
+                        img = PImage.open(os.path.join(path, label, imgfile))
+                        if grayscale:
+                            img = img.convert("L")
+                        else:
+                            img = img.convert("RGB")
+                        if tfms is not None:
+                            tfms(img)
+                        del img
+
                     self._data.append(
                         (os.path.join(path, label, imgfile), self.classes.index(label))
                     )
-                    del img
+
                 except RuntimeError as e:
                     print(e)
                     continue
 
-        self._tfm = tfm
+        self._tfms = tfms
 
     def __len__(self):
         return len(self._data)
 
     def __getitem__(self, idx):
         imgpath, label = self._data[idx]
-        img = Image.open(imgpath)
+        img = PImage.open(imgpath)
         img = img.convert("RGB")
-        if self._tfm is not None:
-            img = self._tfm(img)
+        if self._tfms is not None:
+            img = self._tfms(img)
         return img, label  # .index(label)
 
 
@@ -130,8 +146,8 @@ class SiameseMNIST(Dataset):
             img2 = self.test_data[self.test_pairs[index][1]]
             target = self.test_pairs[index][2]
 
-        img1 = Image.fromarray(img1.numpy(), mode="L")
-        img2 = Image.fromarray(img2.numpy(), mode="L")
+        img1 = PImage.fromarray(img1.numpy(), mode="L")
+        img2 = PImage.fromarray(img2.numpy(), mode="L")
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
@@ -147,12 +163,15 @@ class SiameseImage(Dataset):
     Test: Creates fixed pairs for testing
     """
 
-    def __init__(self, widgets_dataset: ImageDataset, train, grayscale=False):
+    def __init__(self, widgets_dataset: ImageDataset, train, margin=1.0):
         self.widgets_dataset = widgets_dataset
+        self.classes = ["negative", "positive"]
+        self.c = 2
+        self.loss_func = ContrastiveLoss(margin)
+        self.path = widgets_dataset.path
 
         self.train = train
-        self.grayscale = grayscale
-        self.transform = self.widgets_dataset._tfm
+        self.transform = self.widgets_dataset._tfms
         self._data_paths, self._labels = list(zip(*self.widgets_dataset._data))
         self._labels = torch.LongTensor(self._labels)
         self.labels_set = set(self._labels.numpy())
@@ -192,7 +211,7 @@ class SiameseImage(Dataset):
     def __getitem__(self, index):
         if self.train:
             target = np.random.randint(0, 2)
-            img1 = Image.open(self._data_paths[index]).convert("RGB")
+            imgpath1 = self._data_paths[index]
             label1 = self._labels[index].item()
             if target == 1:
                 siamese_index = index
@@ -201,97 +220,13 @@ class SiameseImage(Dataset):
             else:
                 siamese_label = np.random.choice(list(self.labels_set - set([label1])))
                 siamese_index = np.random.choice(self.label_to_indices[siamese_label])
-            img2 = Image.open(self._data_paths[siamese_index]).convert("RGB")
+            imgpath2 = self._data_paths[siamese_index]
         else:
-            img1 = Image.open(self._data_paths[self.test_pairs[index][0]]).convert(
-                "RGB"
-            )
-            img2 = Image.open(self._data_paths[self.test_pairs[index][1]]).convert(
-                "RGB"
-            )
+            imgpath1 = self._data_paths[self.test_pairs[index][0]]
+            imgpath2 = self._data_paths[self.test_pairs[index][1]]
             target = self.test_pairs[index][2]
 
-        to_tensor = transforms.ToTensor()
-        img1 = to_tensor(img1)
-        img2 = to_tensor(img2)
-        if self.transform is not None:
-            img1 = self.transform(img1)
-            img2 = self.transform(img2)
-        return (img1, img2), target
-
-    def __len__(self):
-        return len(self.widgets_dataset)
-
-
-class SiameseImage2(Dataset):
-    """
-    Train: For each sample creates randomly a positive or a negative pair
-    Test: Creates fixed pairs for testing
-
-    This one uses `image_features` as a feature extractor.
-    """
-
-    def __init__(self, widgets_dataset: ImageDataset, train, grayscale=False):
-        self.widgets_dataset = widgets_dataset
-
-        self.train = train
-        self.grayscale = grayscale
-        self.transform = self.widgets_dataset._tfm
-        self._data_paths, self._labels = list(zip(*self.widgets_dataset._data))
-        self._labels = torch.LongTensor(self._labels)
-        self.labels_set = set(self._labels.numpy())
-        self.label_to_indices = {
-            label: np.where(self._labels.numpy() == label)[0]
-            for label in self.labels_set
-        }
-
-        if not self.train:
-            random_state = np.random.RandomState(29)
-
-            positive_pairs = [
-                [
-                    i,
-                    random_state.choice(self.label_to_indices[self._labels[i].item()]),
-                    1,
-                ]
-                for i in range(0, len(self._data_paths), 2)
-            ]
-
-            negative_pairs = [
-                [
-                    i,
-                    random_state.choice(
-                        self.label_to_indices[
-                            np.random.choice(
-                                list(self.labels_set - set([self._labels[i].item()]))
-                            )
-                        ]
-                    ),
-                    0,
-                ]
-                for i in range(1, len(self._data_paths), 2)
-            ]
-            self.test_pairs = positive_pairs + negative_pairs
-
-    def __getitem__(self, index):
-        if self.train:
-            target = np.random.randint(0, 2)
-            img1 = self._data_paths[index]
-            label1 = self._labels[index].item()
-            if target == 1:
-                siamese_index = index
-                while siamese_index == index:
-                    siamese_index = np.random.choice(self.label_to_indices[label1])
-            else:
-                siamese_label = np.random.choice(list(self.labels_set - set([label1])))
-                siamese_index = np.random.choice(self.label_to_indices[siamese_label])
-            img2 = self._data_paths[siamese_index]
-        else:
-            img1 = self._data_paths[self.test_pairs[index][0]]
-            img2 = self._data_paths[self.test_pairs[index][1]]
-            target = self.test_pairs[index][2]
-
-        return (image_features([img1]).squeeze(), image_features([img2]).squeeze()), target
+        return (imgpath1, imgpath2), target
 
     def __len__(self):
         return len(self.widgets_dataset)
@@ -364,9 +299,9 @@ class TripletMNIST(Dataset):
             img2 = self.test_data[self.test_triplets[index][1]]
             img3 = self.test_data[self.test_triplets[index][2]]
 
-        img1 = Image.fromarray(img1.numpy(), mode="L")
-        img2 = Image.fromarray(img2.numpy(), mode="L")
-        img3 = Image.fromarray(img3.numpy(), mode="L")
+        img1 = PImage.fromarray(img1.numpy(), mode="L")
+        img2 = PImage.fromarray(img2.numpy(), mode="L")
+        img3 = PImage.fromarray(img3.numpy(), mode="L")
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
@@ -693,3 +628,74 @@ class COCODataset(Dataset):
         coco_eval.evaluate()
         coco_eval.accumulate()
         coco_eval.summarize()
+
+
+class ImageTuple(ItemBase):
+    def __init__(self, img1, img2):
+        # to_tensor = transforms.ToTensor()
+        # img1, img2 = to_tensor(img1), to_tensor(img2)
+        self.img1, self.img2 = img1, img2
+        self.obj, self.data = (
+            (img1, img2),
+            [pad_to_size(img1.data, (512, 512)), pad_to_size(img2.data, (512, 512))],
+        )
+
+    def apply_tfms(self, tfms, **kwargs):
+        self.img1 = self.img1.apply_tfms(tfms, **kwargs)
+        self.img2 = self.img2.apply_tfms(tfms, **kwargs)
+        self.data = [
+            pad_to_size(self.img1.data, (512, 512)),
+            pad_to_size(self.img2.data, (512, 512)),
+        ]
+        return self
+
+    def to_one(self):
+        return Image(torch.cat(self.data, 2))
+
+    def __repr__(self):
+        return f"({self.img1}, {self.img2})"
+
+
+class SiameseImageList(ImageList):
+    _label_cls = CategoryList
+
+    def __init__(self, items, **kwargs):
+        super().__init__(items, **kwargs)
+
+    @classmethod
+    def from_datasets(cls, dataset_train, dataset_val, **kwargs):
+        items_train = [dataset_train[i] for i in range(len(dataset_train))]
+        items_val = [dataset_val[i] for i in range(len(dataset_val))]
+
+        il_train = cls(items_train)
+        il_val = cls(items_val)
+
+        ils = ItemLists(dataset_train.path, il_train, il_val)
+
+        return ils.label_from_func(lambda item: item[1])
+
+    def get(self, i):
+        imgs, target = self.items[i]
+        img1, img2 = imgs
+        return ImageTuple(self.open(img1), self.open(img2))
+
+    def reconstruct(self, t: Tensor):
+        return ImageTuple(Image(t[0]), Image(t[1]))
+
+    def show_xys(self, xs, ys, figsize: Tuple[int, int] = (12, 6), **kwargs):
+        "Show the `xs` and `ys` on a figure of `figsize`. `kwargs` are passed to the show method."
+        rows = int(math.sqrt(len(xs)))
+        fig, axs = plt.subplots(rows, rows, figsize=figsize)
+        for i, ax in enumerate(axs.flatten() if rows > 1 else [axs]):
+            xs[i].to_one().show(ax=ax, **kwargs)
+        plt.tight_layout()
+
+    def show_xyzs(self, xs, ys, zs, figsize: Tuple[int, int] = None, **kwargs):
+        """Show `xs` (inputs), `ys` (targets) and `zs` (predictions) on a figure of `figsize`.
+        `kwargs` are passed to the show method."""
+        figsize = ifnone(figsize, (12, 3 * len(xs)))
+        fig, axs = plt.subplots(len(xs), 2, figsize=figsize)
+        fig.suptitle("Ground truth / Predictions", weight="bold", size=14)
+        for i, (x, z) in enumerate(zip(xs, zs)):
+            x.to_one().show(ax=axs[i, 0], **kwargs)
+            z.to_one().show(ax=axs[i, 1], **kwargs)
