@@ -33,6 +33,36 @@ class EmbeddingNet(nn.Module):
         return self.forward(x)
 
 
+class EmbeddingNetPretrained(nn.Module):
+    def __init__(self, pretrained_model_class, emsize):
+        super().__init__()
+        self.pretrained_model = nn.Sequential(
+            *list(pretrained_model_class(pretrained=True).children())[:-1]
+        )
+        for param in self.pretrained_model.parameters():
+            param.requires_grad = False
+
+        if emsize < 256:
+            self.fc = nn.Sequential(
+                nn.Linear(2048, 512),
+                nn.PReLU(),
+                nn.Linear(512, 256),
+                nn.PReLU(),
+                nn.Linear(256, emsize),
+            )
+        else:
+            self.fc = nn.Linear(2048, emsize)
+
+    def forward(self, x):
+        output = self.pretrained_model(x)
+        output = output.view(output.size()[0], -1)
+        output = self.fc(output)
+        return output
+
+    def get_embedding(self, x):
+        return self.forward(x)
+
+
 class EmbeddingNetL2(EmbeddingNet):
     def __init__(self):
         super().__init__()

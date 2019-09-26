@@ -632,8 +632,6 @@ class COCODataset(Dataset):
 
 class ImageTuple(ItemBase):
     def __init__(self, img1, img2):
-        # to_tensor = transforms.ToTensor()
-        # img1, img2 = to_tensor(img1), to_tensor(img2)
         self.img1, self.img2 = img1, img2
         self.obj, self.data = (
             (img1, img2),
@@ -670,7 +668,7 @@ class SiameseImageList(ImageList):
         il_train = cls(items_train)
         il_val = cls(items_val)
 
-        ils = ItemLists(dataset_train.path, il_train, il_val)
+        ils = ItemLists(os.path.join(dataset_train.path, "../../../"), il_train, il_val)
 
         return ils.label_from_func(lambda item: item[1])
 
