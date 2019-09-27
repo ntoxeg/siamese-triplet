@@ -1,23 +1,22 @@
-md5: 6be12af6bfb974d620004d2f0c076a30
-cmd: papermill Siamese.ipynb "Siamese output.ipynb" -p batch_size 64 -p emsize 128
-  -p n_epochs 50
+md5: 5bb20ff12c6522c127e6a7022f2c4684
+cmd: papermill Siamese.ipynb "Siamese output.ipynb"
 deps:
-- md5: fbfef336d3f15ae907f1822e53b6810a
+- md5: 60634a7d2f1675d93d12cd58efe2e8f9
   path: Siamese.ipynb
 - md5: c25a56bf7dfb4ed5af9c3bad96caabdc.dir
   path: data/classy_coconut
 outs:
-- md5: db22005201f123c6ee3684d17475ce91
+- md5: 1edb3a473256c27f7697f6f7307ffc72
   path: Siamese output.ipynb
   cache: true
   metric: false
   persist: false
-- md5: 279e19f2ff19de03487c0ddc31070b74
+- md5: 5c17005efef0000fe96ae26968df8fb5
   path: models/siamese.pth
   cache: true
   metric: false
   persist: false
-- md5: 53978a7ab7710dcc2da88fc735c5e569
+- md5: 75dbb8824586a2aea9ad135c4088d627
   path: metrics.json
   cache: false
   metric: true
