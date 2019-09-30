@@ -239,9 +239,9 @@ def SemihardNegativeTripletSelector(margin, cpu=False):
 
 def parse_image(detector, image):
     if isinstance(image, np.ndarray):
-        image = Image.fromarray(image, mode="L")
+        image = Image.fromarray(image, mode="RGB")
     if isinstance(image, torch.Tensor):
-        image = Image.fromarray(image.squeeze().numpy(), mode="L")
+        image = Image.fromarray(image.squeeze().numpy(), mode="RGB")
 
     img_name = "__image.png"
     # TODO: remove the need to save to disk

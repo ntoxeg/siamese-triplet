@@ -668,7 +668,7 @@ class SiameseImageList(ImageList):
         il_train = cls(items_train)
         il_val = cls(items_val)
 
-        ils = ItemLists(os.path.join(dataset_train.path, "../../../"), il_train, il_val)
+        ils = ItemLists(os.path.join(dataset_train.path, ".."), il_train, il_val)
 
         return ils.label_from_func(lambda item: item[1])
 
