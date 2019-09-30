@@ -1,22 +1,26 @@
-md5: 9b708ee58b163d474245288d14ebd6de
+md5: 563551a16401a74783caf7e244205ea1
 cmd: papermill Siamese.ipynb "Siamese output.ipynb"
 deps:
-- md5: 036a5dbfcbb22276254ee15db123e421
+- md5: 5098824822c7db93b48350d6ff72db89
   path: Siamese.ipynb
-- md5: 5103f2ab8d0e955d8dac7290d6879a11.dir
   path: data/classy_coconut
 outs:
-- md5: 3d92d365d8079ad0e9947183ccd28171
+- md5: f6aa8a638b222f35e73216f0345d0406
   path: Siamese output.ipynb
   cache: true
   metric: false
   persist: false
-- md5: e9063a41aba43a10f8cc070ba03a3435
+- md5: e31e5af927be87f9e24d9b083d126ff3
   path: siamese/models/pair_model.pth
   cache: true
   metric: false
   persist: false
-- md5: 6775649f56484eb5da74d21882dd7dee
+- md5: 0d52c56749e1b27b4d9b09ffc3a79eee
+  path: siamese/history.csv
+  cache: false
+  metric: true
+  persist: false
+- md5: 8b0a7528349c963fdc9bfe7782fb5622
   path: metrics.json
   cache: false
   metric: true

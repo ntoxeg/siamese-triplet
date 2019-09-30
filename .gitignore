@@ -1,5 +1,6 @@
 
 __pycache__/
+.ipynb_checkpoints/
 /RGB Siamese output.ipynb
 /siamese.pth
 /Siamese output.ipynb
