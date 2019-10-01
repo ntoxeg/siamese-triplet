@@ -1,6 +1,10 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+from fastai.vision import *
+from fastai.vision.learner import cnn_config
+from losses import ContrastiveLoss
+
 
 class EmbeddingNet(nn.Module):
     def __init__(self, emsize, grayscale=False):
@@ -33,34 +37,29 @@ class EmbeddingNet(nn.Module):
         return self.forward(x)
 
 
-class EmbeddingNetPretrained(nn.Module):
-    def __init__(self, pretrained_model_class, emsize):
-        super().__init__()
-        self.pretrained_model = nn.Sequential(
-            *list(pretrained_model_class(pretrained=True).children())[:-1]
-        )
-        for param in self.pretrained_model.parameters():
-            param.requires_grad = False
+# class EmbeddingNetPretrained(nn.Module):
+#     def __init__(self, pretrained_model_class, emsize):
+#         super().__init__()
+#         self.pretrained_model = create_cnn_model(pretrained_model_class, emsize)
+#         if emsize < 256:
+#             self.fc = nn.Sequential(
+#                 nn.Linear(2048, 512),
+#                 nn.PReLU(),
+#                 nn.Linear(512, 256),
+#                 nn.PReLU(),
+#                 nn.Linear(256, emsize),
+#             )
+#         else:
+#             self.fc = nn.Linear(2048, emsize)
 
-        if emsize < 256:
-            self.fc = nn.Sequential(
-                nn.Linear(2048, 512),
-                nn.PReLU(),
-                nn.Linear(512, 256),
-                nn.PReLU(),
-                nn.Linear(256, emsize),
-            )
-        else:
-            self.fc = nn.Linear(2048, emsize)
+#     def forward(self, x):
+#         output = self.pretrained_model(x)
+#         output = output.view(output.size()[0], -1)
+#         output = self.fc(output)
+#         return output
 
-    def forward(self, x):
-        output = self.pretrained_model(x)
-        output = output.view(output.size()[0], -1)
-        output = self.fc(output)
-        return output
-
-    def get_embedding(self, x):
-        return self.forward(x)
+#     def get_embedding(self, x):
+#         return self.forward(x)
 
 
 class EmbeddingNetL2(EmbeddingNet):
@@ -121,3 +120,18 @@ class TripletNet(nn.Module):
 
     def get_embedding(self, x):
         return self.embedding_net(x)
+
+
+def siamese_learner(pretrained_model_class, emsize, margin, data, callback_fns):
+    meta = cnn_config(pretrained_model_class)
+    model = create_cnn_model(pretrained_model_class, emsize)
+    learn = Learner(
+        data, model, loss_func=ContrastiveLoss(margin), callback_fns=callback_fns
+    )
+    learn.split(meta["split"])
+    learn.freeze()
+    model = SiameseNet(learn.model)
+    learn = Learner(
+        data, model, loss_func=ContrastiveLoss(margin), callback_fns=callback_fns
+    )
+    return learn
