@@ -122,16 +122,19 @@ class TripletNet(nn.Module):
         return self.embedding_net(x)
 
 
-def siamese_learner(pretrained_model_class, emsize, margin, data, callback_fns):
+def siamese_learner(
+    data,
+    pretrained_model_class,
+    emsize=128,
+    margin=1.0,
+    callback_fns=None,
+):
     meta = cnn_config(pretrained_model_class)
     model = create_cnn_model(pretrained_model_class, emsize)
+    model = SiameseNet(model)
     learn = Learner(
         data, model, loss_func=ContrastiveLoss(margin), callback_fns=callback_fns
     )
-    learn.split(meta["split"])
-    learn.freeze()
-    model = SiameseNet(learn.model)
-    learn = Learner(
-        data, model, loss_func=ContrastiveLoss(margin), callback_fns=callback_fns
-    )
+    learn.split(meta["split"](model.embedding_net))
+    apply_init(model.embedding_net[1], nn.init.kaiming_normal_)
     return learn
