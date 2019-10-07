@@ -11,7 +11,8 @@ from torchvision import transforms
 import pycocotools.coco as coco
 from pycocotools.cocoeval import COCOeval
 
-from losses import ContrastiveLoss
+from losses import ContrastiveLoss, OnlineContrastiveLoss
+from utils import HardNegativePairSelector
 
 from fastai.vision import *
 
@@ -697,3 +698,34 @@ class SiameseImageList(ImageList):
         for i, (x, z) in enumerate(zip(xs, zs)):
             x.to_one().show(ax=axs[i, 0], **kwargs)
             z.to_one().show(ax=axs[i, 1], **kwargs)
+
+
+class ImageEmbedList(ImageList):
+    def __init__(
+        self, *args, convert_mode="RGB", after_open: Callable = None, **kwargs
+    ):
+        super().__init__(
+            *args, convert_mode=convert_mode, after_open=after_open, **kwargs
+        )
+        self.label_cls = PseudoCategoryList
+
+
+class PseudoCategoryList(CategoryList):
+    def __init__(
+        self,
+        items: Iterator,
+        classes: Collection = None,
+        label_delim: str = None,
+        **kwargs,
+    ):
+        super().__init__(items, classes=classes, **kwargs)
+        self.loss_func = OnlineContrastiveLoss(1.0, HardNegativePairSelector())
+
+    def analyze_pred(self, pred):
+        return pred
+
+    def reconstruct(self, t):
+        if isinstance(t, int) or len(t.size()) == 0:
+            return Category(t, self.classes[t])
+        else:
+            return "Not a category, just an embedding."

@@ -3,7 +3,8 @@ import torch.nn.functional as F
 
 from fastai.vision import *
 from fastai.vision.learner import cnn_config
-from losses import ContrastiveLoss
+from losses import ContrastiveLoss, OnlineContrastiveLoss
+from utils import HardNegativePairSelector
 
 
 class EmbeddingNet(nn.Module):
@@ -123,11 +124,7 @@ class TripletNet(nn.Module):
 
 
 def siamese_learner(
-    data,
-    pretrained_model_class,
-    emsize=128,
-    margin=1.0,
-    callback_fns=None,
+    data, pretrained_model_class, emsize=128, margin=1.0, callback_fns=None
 ):
     meta = cnn_config(pretrained_model_class)
     model = create_cnn_model(pretrained_model_class, emsize)
@@ -137,4 +134,20 @@ def siamese_learner(
     )
     learn.split(meta["split"](model.embedding_net))
     apply_init(model.embedding_net[1], nn.init.kaiming_normal_)
+    return learn
+
+
+def siamese_embedding_learner(
+    data, pretrained_model_class, emsize=128, margin=1.0, callback_fns=None
+):
+    meta = cnn_config(pretrained_model_class)
+    model = create_cnn_model(pretrained_model_class, emsize)
+    learn = Learner(
+        data,
+        model,
+        loss_func=OnlineContrastiveLoss(margin, HardNegativePairSelector()),
+        callback_fns=callback_fns,
+    )
+    learn.split(meta["split"])
+    apply_init(model[1], nn.init.kaiming_normal_)
     return learn
