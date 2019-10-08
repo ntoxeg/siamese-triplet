@@ -728,4 +728,4 @@ class PseudoCategoryList(CategoryList):
         if isinstance(t, int) or len(t.size()) == 0:
             return Category(t, self.classes[t])
         else:
-            return "Not a category, just an embedding."
+            return EmptyLabel()
