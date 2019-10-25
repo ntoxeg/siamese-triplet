@@ -9,7 +9,7 @@ import hydra
 import logging
 
 
-class AutoAnnotatorServicer(automatic_annotator_pb2_grpc.AutoAnnotateServiceServicer):
+class AutoAnnotateServicer(automatic_annotator_pb2_grpc.AutoAnnotateServicer):
     def Annotate(self, request, context):
         imgset = load_data(request.datapath)
         exemplar = PImage.open(request.expath)
@@ -20,7 +20,7 @@ class AutoAnnotatorServicer(automatic_annotator_pb2_grpc.AutoAnnotateServiceServ
             ans.extend(bbox_search(exemplar, img))
 
         ans_bytes = [img.tobytes() for img in ans]
-        return automatic_annotator_pb2_grpc.AnnotatorResponse(proposals=ans_bytes)
+        return automatic_annotator_pb2_grpc.AnnotateResponse(proposal=ans_bytes)
 
 
 log = logging.getLogger(__name__)
@@ -28,8 +28,8 @@ log = logging.getLogger(__name__)
 @hydra.main()
 def serve(cfg):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    automatic_annotator_pb2_grpc.add_AutoAnnotateServiceServicer_to_server(
-        AutoAnnotatorServicer(),
+    automatic_annotator_pb2_grpc.add_AutoAnnotateServicer_to_server(
+        AutoAnnotateServicer(),
         server
     )
     server.add_insecure_port('[::]:50051')

@@ -4,7 +4,7 @@ import grpc
 import automatic_annotator_pb2 as automatic__annotator__pb2
 
 
-class AutoAnnotateServiceStub(object):
+class AutoAnnotateStub(object):
   # missing associated documentation comment in .proto file
   pass
 
@@ -15,13 +15,13 @@ class AutoAnnotateServiceStub(object):
       channel: A grpc.Channel.
     """
     self.Annotate = channel.unary_unary(
-        '/AutoAnnotateService/Annotate',
+        '/AutoAnnotate/Annotate',
         request_serializer=automatic__annotator__pb2.AnnotateRequest.SerializeToString,
         response_deserializer=automatic__annotator__pb2.AnnotateResponse.FromString,
         )
 
 
-class AutoAnnotateServiceServicer(object):
+class AutoAnnotateServicer(object):
   # missing associated documentation comment in .proto file
   pass
 
@@ -33,7 +33,7 @@ class AutoAnnotateServiceServicer(object):
     raise NotImplementedError('Method not implemented!')
 
 
-def add_AutoAnnotateServiceServicer_to_server(servicer, server):
+def add_AutoAnnotateServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'Annotate': grpc.unary_unary_rpc_method_handler(
           servicer.Annotate,
@@ -42,5 +42,5 @@ def add_AutoAnnotateServiceServicer_to_server(servicer, server):
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
-      'AutoAnnotateService', rpc_method_handlers)
+      'AutoAnnotate', rpc_method_handlers)
   server.add_generic_rpc_handlers((generic_handler,))

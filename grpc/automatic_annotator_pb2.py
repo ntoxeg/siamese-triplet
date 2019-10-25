@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x19\x61utomatic_annotator.proto\"3\n\x0f\x41nnotateRequest\x12\x10\n\x08\x64\x61tapath\x18\x01 \x01(\t\x12\x0e\n\x06\x65xpath\x18\x02 \x01(\t\"$\n\x10\x41nnotateResponse\x12\x10\n\x08proposal\x18\x01 \x03(\x0c\x32\x46\n\x13\x41utoAnnotateService\x12/\n\x08\x41nnotate\x12\x10.AnnotateRequest\x1a\x11.AnnotateResponseb\x06proto3')
+  serialized_pb=_b('\n\x19\x61utomatic_annotator.proto\"3\n\x0f\x41nnotateRequest\x12\x10\n\x08\x64\x61tapath\x18\x01 \x01(\t\x12\x0e\n\x06\x65xpath\x18\x02 \x01(\t\"$\n\x10\x41nnotateResponse\x12\x10\n\x08proposal\x18\x01 \x03(\x0c\x32?\n\x0c\x41utoAnnotate\x12/\n\x08\x41nnotate\x12\x10.AnnotateRequest\x1a\x11.AnnotateResponseb\x06proto3')
 )
 
 
@@ -114,18 +114,18 @@ _sym_db.RegisterMessage(AnnotateResponse)
 
 
 
-_AUTOANNOTATESERVICE = _descriptor.ServiceDescriptor(
-  name='AutoAnnotateService',
-  full_name='AutoAnnotateService',
+_AUTOANNOTATE = _descriptor.ServiceDescriptor(
+  name='AutoAnnotate',
+  full_name='AutoAnnotate',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   serialized_start=120,
-  serialized_end=190,
+  serialized_end=183,
   methods=[
   _descriptor.MethodDescriptor(
     name='Annotate',
-    full_name='AutoAnnotateService.Annotate',
+    full_name='AutoAnnotate.Annotate',
     index=0,
     containing_service=None,
     input_type=_ANNOTATEREQUEST,
@@ -133,8 +133,8 @@ _AUTOANNOTATESERVICE = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_AUTOANNOTATESERVICE)
+_sym_db.RegisterServiceDescriptor(_AUTOANNOTATE)
 
-DESCRIPTOR.services_by_name['AutoAnnotateService'] = _AUTOANNOTATESERVICE
+DESCRIPTOR.services_by_name['AutoAnnotate'] = _AUTOANNOTATE
 
 # @@protoc_insertion_point(module_scope)

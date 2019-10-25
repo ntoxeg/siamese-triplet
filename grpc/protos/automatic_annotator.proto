@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service AutoAnnotateService {
+service AutoAnnotate {
   rpc Annotate (AnnotateRequest) returns (AnnotateResponse);
 }
 
