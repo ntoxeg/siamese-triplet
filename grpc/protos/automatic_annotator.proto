@@ -10,5 +10,5 @@ message AnnotateRequest {
 }
 
 message AnnotateResponse {
-  repeated bytes proposal = 1;
+  repeated bytes proposals = 1;
 }
