@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+service AutoAnnotateService {
+  rpc Annotate (AnnotateRequest) returns (AnnotateResponse);
+}
+
+message AnnotateRequest {
+  string datapath = 1;
+  string expath = 2;
+}
+
+message AnnotateResponse {
+  repeated bytes proposal = 1;
+}
