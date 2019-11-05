@@ -5,6 +5,7 @@ import automatic_annotator_pb2_grpc
 
 import hydra
 from PIL import Image as PImage
+import json
 
 
 channel = grpc.insecure_channel('localhost:50051')
@@ -19,10 +20,27 @@ def annotator_client(cfg):
             expath=cfg.expath
     )
     ret = stub.Annotate(request)
-    ans = [PImage.frombytes(b) for b in ret.proposal]
-    for i, img in enumerate(ans):
-        img.save(f"output/proposal_{i}.png")
-
+#     imgs = [PImage.open(path) for path in ret.imgpaths]
+    def open_image(i):
+        return PImage.open(ret.imgpaths[i])
+    ans = {
+        imgpath: [
+            (proposal.x1, proposal.y1, proposal.x2, proposal.y2) for proposal in ret.all_proposals[i].proposals
+        ] for i, imgpath in enumerate(ret.imgpaths)
+    }
+    
+    coco_dict = {
+        "categories": [{"id": 100, "name": "head"}],
+        "annotations": []
+    }
+    for i, (imgpath, proposals) in enumerate(ans.items()):
+        for j, proposal in enumerate(proposals):
+            img = open_image(i).crop(proposal)
+            img.save(f"/home/adrian/projects/siamese-triplet/grpc/output/proposal_{i}_{j}.png")
+            x1, y1, x2, y2 = proposal
+            coco_dict["annotations"].append({"id": f"{i}_{j}", "class_id": 100, "bbox": [x1, y1, x2-x1, y2-y1]})
+    with open("/home/adrian/projects/siamese-triplet/grpc/output/coco.json", "w") as f:
+        json.dump(coco_dict, f)
 
 if __name__ == "__main__":
     annotator_client()

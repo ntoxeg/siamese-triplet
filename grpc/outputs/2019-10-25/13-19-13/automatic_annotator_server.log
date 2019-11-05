@@ -1,0 +1,10 @@
+[2019-10-25 13:19:13,601][__main__][INFO] - The server is running...
+[2019-10-25 13:24:38,833][grpc._server][ERROR] - Exception calling application: 'tuple' object has no attribute 'tobytes'
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 22, in Annotate
+    ans_bytes = [img.tobytes() for img in ans]
+  File "automatic_annotator_server.py", line 22, in <listcomp>
+    ans_bytes = [img.tobytes() for img in ans]
+AttributeError: 'tuple' object has no attribute 'tobytes'

@@ -1,0 +1,20 @@
+[2019-10-25 12:33:04,875][__main__][INFO] - The server is running...
+[2019-10-25 12:33:14,941][grpc._server][ERROR] - Exception calling application: 'Image' object has no attribute 'pixel'
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 20, in Annotate
+    ans.extend(bbox_search(exemplar, img))
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/torch/nn/modules/module.py", line 541, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/adrian/projects/siamese-triplet/grpc/semantic_search.py", line 53, in forward
+    idxs = find_nneighbours(self.learner, exemplar, crops, n=n)
+  File "/home/adrian/projects/siamese-triplet/grpc/embedder.py", line 43, in find_nneighbours
+    imgembed = embed(learner, img).cpu()
+  File "/home/adrian/projects/siamese-triplet/grpc/embedder.py", line 30, in embed
+    return learner.predict(tfm(copy(img)))[1]
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/fastai/vision/image.py", line 464, in __call__
+    if args: return self.calc(*args, **kwargs)
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/fastai/vision/image.py", line 469, in calc
+    if self._wrap: return getattr(x, self._wrap)(self.func, *args, **kwargs)
+AttributeError: 'Image' object has no attribute 'pixel'

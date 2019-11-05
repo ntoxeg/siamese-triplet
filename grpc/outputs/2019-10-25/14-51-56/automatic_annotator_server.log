@@ -1,0 +1,10 @@
+[2019-10-25 14:51:56,240][__main__][INFO] - The server is running...
+[2019-10-25 14:52:03,863][grpc._server][ERROR] - Exception calling application: No positional arguments allowed
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 25, in Annotate
+    proposals.proposals.extend([automatic_annotator_pb2.Proposal(*bbox) for bbox in bbox_search(exemplar, img)])
+  File "automatic_annotator_server.py", line 25, in <listcomp>
+    proposals.proposals.extend([automatic_annotator_pb2.Proposal(*bbox) for bbox in bbox_search(exemplar, img)])
+TypeError: No positional arguments allowed

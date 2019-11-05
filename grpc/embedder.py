@@ -56,6 +56,12 @@ def show_nneighbours(learner:Learner, img:Image, imgset, n=5, embedlist=None):
 
 # In[4]:
 
+tfms = transforms.Compose([
+    transforms.ToTensor(),
+    Image,
+#     partial(crop_pad, size=512, padding_mode="zeros")
+])
+
 def load_data(data_dir, classes):
 #  data_dir='../data'
     #  data_split='val'
@@ -78,19 +84,14 @@ def load_data(data_dir, classes):
 # In[29]:
 
 
-    tfms = transforms.Compose([
-        transforms.ToTensor(),
-        Image,
-    #     partial(crop_pad, size=512, padding_mode="zeros")
-    ])
     dataset = ImageDataset(
-        f"{data_dir}/",
+        data_dir,
         classes,
         tfms=tfms
     )
     n_classes = len(classes)
 
-    imgset = [img for img, label in dataset]
+    imgset = [(dataset._data[i][0], img) for i, (img, label) in enumerate(dataset)]
     print(len(dataset))
     return imgset
 
@@ -98,7 +99,7 @@ def load_data(data_dir, classes):
 # In[7]:
 
 def load_default_learner():
-    return load_learner("../siamese", "export.pkl").to_fp32()
+    return load_learner("/home/adrian/projects/siamese-triplet/siamese", "export.pkl").to_fp32()
 
 
 # In[12]:

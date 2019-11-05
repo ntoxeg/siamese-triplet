@@ -28,7 +28,7 @@ class BBoxSimilaritySearch(nn.Module):
         self.toimg = transforms.ToPILImage()
         self.totsr = transforms.ToTensor()
         
-    def forward(self, exemplar:Image, search_target:Image, n=5, iters=100):
+    def forward(self, exemplar:Image, search_target:Image, n=5, iters=10):
 #         exe_embed = self.embedder(exemplar)
 #         target_embed = self.embedder(search_target)
 #         ans = self.searcher(exe_embed, target_embed)
@@ -52,7 +52,7 @@ class BBoxSimilaritySearch(nn.Module):
         crops = list(map(lambda bbox: Image(self.totsr(search_target_pil.crop(bbox))), windows))
         idxs = find_nneighbours(self.learner, exemplar, crops, n=n)
         
-        return [crops[i] for i in idxs]
+        return [windows[i] for i in idxs]
 
 
 # In[ ]:
@@ -73,5 +73,5 @@ def get_proposals(bbox_search, imgpath, targetpath):
     img = tfms(PImage.open(imgpath))
     target = tfms(PImage.open(targetpath))
     with torch.no_grad():
-        return bbox_search(img, target, iters=100)
+        return bbox_search(img, target)
 

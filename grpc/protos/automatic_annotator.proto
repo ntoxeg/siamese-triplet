@@ -10,5 +10,17 @@ message AnnotateRequest {
 }
 
 message AnnotateResponse {
-  repeated bytes proposals = 1;
+  repeated string imgpaths = 1;
+  repeated Proposals all_proposals = 2;
+}
+
+message Proposals {
+  repeated Proposal proposals = 1;
+}
+
+message Proposal {
+  int32 x1 = 1;
+  int32 y1 = 2;
+  int32 x2 = 3;
+  int32 y2 = 4;
 }

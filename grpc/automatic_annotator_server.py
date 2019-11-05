@@ -1,4 +1,5 @@
 import automatic_annotator_pb2_grpc
+import automatic_annotator_pb2
 import grpc
 from time import sleep
 from concurrent import futures
@@ -11,17 +12,23 @@ import logging
 
 class AutoAnnotateServicer(automatic_annotator_pb2_grpc.AutoAnnotateServicer):
     def Annotate(self, request, context):
-        imgset = load_data(request.datapath)
-        exemplar = PImage.open(request.expath)
+        imgset = load_data(request.datapath, ("person",))
+        exemplar = tfms(PImage.open(request.expath))
         learner = load_default_learner()
         bbox_search = BBoxSimilaritySearch(learner)
-        ans = []
-        for img in imgset:
-            ans.extend(bbox_search(exemplar, img))
+#         ans = []
+        msg = automatic_annotator_pb2.AnnotateResponse()
+        for imgpath, img in imgset:
+            msg.imgpaths.append(imgpath)
+            
+            proposals = automatic_annotator_pb2.Proposals()
+            proposals.proposals.extend([
+                automatic_annotator_pb2.Proposal(x1=x1,y1=y1,x2=x2,y2=y2) for x1,y1,x2,y2 in bbox_search(exemplar, img)
+            ])
+            msg.all_proposals.append(proposals)
 
-        ans_bytes = [img.tobytes() for img in ans]
-        msg = automatic_annotator_pb2_grpc.AnnotateResponse()
-        msg.proposals.extend(ans_bytes)
+#         ans_bytes = [img.tobytes() for img in ans]
+#         msg.proposals.extend(ans_bytes)
         return msg
 
 

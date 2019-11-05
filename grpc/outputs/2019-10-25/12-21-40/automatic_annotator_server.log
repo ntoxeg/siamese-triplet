@@ -1,0 +1,12 @@
+[2019-10-25 12:21:40,128][__main__][INFO] - The server is running...
+[2019-10-25 12:21:43,966][grpc._server][ERROR] - Exception calling application: [Errno 2] No such file or directory: '/asdf'
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 14, in Annotate
+    imgset = load_data(request.datapath, ("asdf",))
+  File "/home/adrian/projects/siamese-triplet/grpc/embedder.py", line 89, in load_data
+    tfms=tfms
+  File "/home/adrian/projects/siamese-triplet/grpc/data.py", line 38, in __init__
+    for imgfile in os.listdir(os.path.join(path, label)):
+FileNotFoundError: [Errno 2] No such file or directory: '/asdf'

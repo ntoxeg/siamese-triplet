@@ -1,0 +1,29 @@
+[2019-10-25 12:29:48,972][__main__][INFO] - The server is running...
+[2019-10-25 12:30:03,482][grpc._server][ERROR] - Exception calling application: [Errno 2] No such file or directory: '/home/adrian/projects/siamese-triplet/grpc/data/classy_coconut/val/person'
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 14, in Annotate
+    imgset = load_data(request.datapath, ("person",))
+  File "/home/adrian/projects/siamese-triplet/grpc/embedder.py", line 89, in load_data
+    tfms=tfms
+  File "/home/adrian/projects/siamese-triplet/grpc/data.py", line 38, in __init__
+    for imgfile in os.listdir(os.path.join(path, label)):
+FileNotFoundError: [Errno 2] No such file or directory: '/home/adrian/projects/siamese-triplet/grpc/data/classy_coconut/val/person'
+[2019-10-25 12:30:28,597][grpc._server][ERROR] - Exception calling application: [Errno 2] No such file or directory: '../siamese/export.pkl'
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 16, in Annotate
+    learner = load_default_learner()
+  File "/home/adrian/projects/siamese-triplet/grpc/embedder.py", line 101, in load_default_learner
+    return load_learner("../siamese", "export.pkl").to_fp32()
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/fastai/basic_train.py", line 619, in load_learner
+    state = torch.load(source, map_location='cpu') if defaults.device == torch.device('cpu') else torch.load(source)
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/torch/serialization.py", line 422, in load
+    f = f.open('rb')
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/pathlib.py", line 1186, in open
+    opener=self._opener)
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/pathlib.py", line 1039, in _opener
+    return self._accessor.open(self, flags, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '../siamese/export.pkl'

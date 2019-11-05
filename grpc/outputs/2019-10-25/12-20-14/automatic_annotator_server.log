@@ -1,0 +1,8 @@
+[2019-10-25 12:20:14,262][__main__][INFO] - The server is running...
+[2019-10-25 12:20:29,562][grpc._server][ERROR] - Exception calling application: load_data() missing 1 required positional argument: 'classes'
+Traceback (most recent call last):
+  File "/home/adrian/miniconda3/envs/julia/lib/python3.7/site-packages/grpc/_server.py", line 435, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "automatic_annotator_server.py", line 14, in Annotate
+    imgset = load_data(request.datapath)
+TypeError: load_data() missing 1 required positional argument: 'classes'
