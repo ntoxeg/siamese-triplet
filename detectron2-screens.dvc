@@ -1,0 +1,16 @@
+md5: 2557bfd10cca4d0a72a10ebdcc785c14
+cmd: papermill 08_detectron2.ipynb 08_detectron2-output.ipynb
+deps:
+- md5: 5400709dca1e115f2aa2d4afb1c69cc5.dir
+  path: data/widgets
+outs:
+- md5: 63bddfa9923ccc9ee7e0a2897d4220ef
+  path: 08_detectron2-output.ipynb
+  cache: true
+  metric: false
+  persist: false
+- md5: db50bc70673ff801d2070a6cf80c11e4.dir
+  path: detectron2
+  cache: true
+  metric: false
+  persist: false
